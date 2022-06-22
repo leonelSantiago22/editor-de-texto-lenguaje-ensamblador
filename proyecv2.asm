@@ -133,16 +133,10 @@ crear_archivo:
         mov    fid, ax        ; fid es el identificador del archivo
         ret
 
-;nos permite crear un archivo nuevo
-;revisado
-crear_archivo2:   
+crear_archivo3:   
         push   cx
         push   ax
         clc                                     ;bandera de acarreo limpiar
-        mov    posx, 24
-        mov    posy, 9
-        call   cursor_posicion                  ; move cursor location for input crear_archivo2 name
-        call   extraer_nombre_archivo           ; llamamos a llamar el nombre
         pop    ax
         ;mov    al, 02
         mov    cx, 00                           ; abrimos el arhivo en normal
@@ -158,6 +152,40 @@ error_archivo:
         mov    dx,ax                        ; 
         call des4                            ;desplegamos el mendaje de error
 sal_archivo:
+        ;restablecemos el cursor
+        mov    posx, 00
+        mov    posy, 00
+        call   cursor_posicion              ; move cursor location
+        pop    cx
+        ;pop    ax       ;restauramos la pila
+        ret
+
+;nos permite crear un archivo nuevo
+;revisado
+
+crear_archivo2:   
+        push   cx
+        push   ax
+        clc                                     ;bandera de acarreo limpiar
+        mov    posx, 24
+        mov    posy, 9
+        call   cursor_posicion                  ; move cursor location for input crear_archivo2 name
+        call   extraer_nombre_archivo           ; llamamos a llamar el nombre
+        pop    ax
+        ;mov    al, 02
+        mov    cx, 00                           ; abrimos el arhivo en normal
+        lea    dx, nombre_archivo            ; nombre del archivo 
+        int    21H
+        jc     error_archivo3
+        mov    fid, ax                      ; mandamos el nombre del archivo al identificador
+        jmp    sal_archivo3
+error_archivo3:        
+        mov    posx, 24
+        mov    posy, 9
+        call   cursor_posicion                  ;locacion del sursor para imprimir el mismo eh imprimir el mensaje de error
+        mov    dx,ax                        ; 
+        call des4                            ;desplegamos el mendaje de error
+sal_archivo3:
         ;restablecemos el cursor
         mov    posx, 00
         mov    posy, 00
@@ -606,6 +634,9 @@ pulso_f2:
         ret
 ;Guuardar el contenido
 pulso_f3:
+        mov    ah,3ch            ;abrimos el archivo solo en modo apartura
+        mov     al,02
+        call   crear_archivo3     ;abrimos o creamos un archivo
         call escribir_archivo   ;salvamos el contenido
         call restablecer_posicion_inicial
         call para_abajo
