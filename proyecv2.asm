@@ -2,7 +2,7 @@
 ;es un editor de texto en el lenguaje ensamblador su ejecucion es em corrida dosbox,
 ;programado en AL aseembly lenguaje 8086 por Leonel Santiago Rosas y Daniel Gaytan Hernandez
 ;proyecto para la materia de Lenguaje ensamblador por el Mtro. Luiz Anselmo Zarza Lopez 
-;agradecimiento a mi co-autor Gaytan
+;agradecimiento a mi co-autor Angel Daniel Gaytan
 .model small
 .486
 include ..\fun\macros.asm
