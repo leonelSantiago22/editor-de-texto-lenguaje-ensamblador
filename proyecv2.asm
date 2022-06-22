@@ -84,12 +84,33 @@ tipo_captura:
         mov    ah, 02H
         int    16H                ; int 16H,02H - ck
         mov    ah, 02H            ; int 21H,02H - escribe el caracter de salida
+        jnz    cap_encendidas             ; salta si no es cero o error a mostrar que las capturas estan habilitadas
         mov    cx, 04
         mov    dl, 20H            ; Set the character writen to STDOUT to spcae 
 cic1_tipo_captura:
         int    21H
         loop   cic1_tipo_captura            ; loop to clean Caps Lock information
-        
+        jmp    num
+cap_encendidas: print"Caps"
+
+
+num:    mov    posy, 70            ; posyumn locacion del cursor
+        call   cursor_posicion     ;mover el cursor para mostrar la información de Bloq Num 
+;ah para interrupcion 16h para el scan-code de las teclas
+;ah=12h teclado expandido, obtener el teclado expandido
+;inf: https://es-academic.com/dic.nsf/eswiki/591430
+	mov    ah, 12H
+        int    16H                ; int 16H,12H - consultar el estado de cambio de teclado extendido
+        and    al, 00100000B      ; Comprobar bloqueo numérico)
+        mov    ah, 02H
+        jnz    num_encendido              ; salta si no es igual a zero donde badera z=0
+        mov    cx, 03
+        mov    dl, 20H            ; Establezca el carácter escrito en STDOUT en espacio
+num_apagado:int    21H
+        loop   num_apagado             ; loop to clean Num Lock information
+        jmp    sal_tipo_captura
+num_encendido:  print "Num"
+
 sal_tipo_captura:
         pop    dx                 ; restauramos la posicion x y y
         mov    posy, dh
@@ -114,44 +135,16 @@ crear_archivo:
 
 ;nos permite crear un archivo nuevo
 ;revisado
-crear_archivo3:   
-        push   cx
-        push   ax
-        clc                                     ;bandera de acarreo limpiar
-        pop    ax
-        mov    al, 0
-        mov    cx, 00                           ; abrimos el arhivo en normal
-        lea    dx, nombre_archivo            ; nombre del archivo 
-        int    21H
-        jc     error_archivo
-        mov    fid, ax                      ; mandamos el nombre del archivo al identificador
-        jmp    sal_archivo
-error_archivo3:        
-        mov    posx, 24
-        mov    posy, 9
-        call   cursor_posicion                  ;locacion del sursor para imprimir el mismo eh imprimir el mensaje de error
-        mov     dx,ax                        ; 
-        call    des4                            ;desplegamos el mendaje de error
-sal_archivo3:
-        ;restablecemos el cursor
-        call restablecer_posicion_inicial
-        pop    cx
-        ;pop    ax       ;restauramos la pila
-        ret
-
-
 crear_archivo2:   
         push   cx
         push   ax
-        cmp numero_archivos,05
-        jae sal_archivo
         clc                                     ;bandera de acarreo limpiar
         mov    posx, 24
         mov    posy, 9
         call   cursor_posicion                  ; move cursor location for input crear_archivo2 name
         call   extraer_nombre_archivo           ; llamamos a llamar el nombre
         pop    ax
-        mov    al, 0
+        ;mov    al, 02
         mov    cx, 00                           ; abrimos el arhivo en normal
         lea    dx, nombre_archivo            ; nombre del archivo 
         int    21H
@@ -162,8 +155,8 @@ error_archivo:
         mov    posx, 24
         mov    posy, 9
         call   cursor_posicion                  ;locacion del sursor para imprimir el mismo eh imprimir el mensaje de error
-        mov     dx,ax                        ; 
-        call    des4                            ;desplegamos el mendaje de error
+        mov    dx,ax                        ; 
+        call des4                            ;desplegamos el mendaje de error
 sal_archivo:
         ;restablecemos el cursor
         mov    posx, 00
@@ -262,7 +255,7 @@ Menu:
         call   cursor_posicion
         mov    ah, 02H
         print "nombre:"         ;conocer el nombre del archivo en el que estamos
-        mov    posx, 0          ;regresamos a la posicion donde podemos insertar
+        mov    posx, 2          ;regresamos a la posicion donde podemos insertar
         ret
 
 entrada_del_usuarios:
@@ -390,11 +383,10 @@ limite_y:
 para_abajo:
         cmp    posx, limite_inferior        ; limite de x 
         JAE    scroll_arriba
-        
+        inc    posx                ; siguiente posicion de x
 
 	    ; Desplácese hacia arriba si está en la parte inferior del espacio del editor
 scroll_arriba:   cmp    Ltop, limite_pantalla
-inc    posx                ; siguiente posicion de x
         JAE    sal_abajo
         mov    ax, 0601H                   ; El código siguiente recorre toda la pantalla una línea y establece un atributo de color:
         call   limpiar_pantalla             ; hacia arriba
@@ -596,25 +588,26 @@ pulso_f1:
         mov    ax, 0600H          ;posicionar scroll y limpiar
         call   limpiar_pantalla   
         mov    ah, 3CH            ;funcion para crear el arhivo
+        mov al,00
         call   crear_archivo2               ; crear nuevo archivo
-        call restablecer_posicion_inicial
-        call para_abajo
+        call    restablecer_posicion_inicial
+        call    para_abajo
         ret
 ;abrir archivo
 pulso_f2:
-        mov     ax, 0600H          ;posicionamos el scroll y lo limiamos
-        call    limpiar_pantalla   ; Scroll
-        mov     ah,3dh            ;abrimos el archivo solo en modo apartura
-        call    crear_archivo2     ;abrimos o creamos un archivo
-        call    leer               ;leemos el contenido de este
-        call    restablecer_posicion_inicial
+        mov    ax, 0600H          ;posicionamos el scroll y lo limiamos
+        call   limpiar_pantalla   ; Scroll
+        mov    ah,3dh            ;abrimos el archivo solo en modo apartura
+        mov     al,02
+        call   crear_archivo2     ;abrimos o creamos un archivo
+        call   leer               ;leemos el contenido de este
+        call   restablecer_posicion_inicial
         call    para_abajo
         ret
 ;Guuardar el contenido
 pulso_f3:
-        ;call   crear_archivo3               ; crear nuevo archivo
-        call   escribir_archivo   ;salvamos el contenido
-        call   restablecer_posicion_inicial
+        call escribir_archivo   ;salvamos el contenido
+        call restablecer_posicion_inicial
         call para_abajo
         ret
 
