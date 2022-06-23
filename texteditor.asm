@@ -275,7 +275,7 @@ Menu:
         print "F2=Mostrar "
         print "F3=Guardar "
         ;print "F4=Modificar"
-	print "F4=Borrar"
+	;print "F4=Borrar"
         print "ESC=Salir"
         ;nos movemos al final para poder escribir
         mov    posx, 24
