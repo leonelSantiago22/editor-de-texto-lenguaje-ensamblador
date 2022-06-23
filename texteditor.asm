@@ -24,7 +24,7 @@ extrn spc:near
         Ltop        DB     00               ;medida en la que estamos
         InKey       DB     00               ;estado de la tecla de insercion para conocer si esta activa
         locacion    DW     0                ;saber en que columa estamos
-        cant_enter  DB     00
+        ;cant_enter  DB     00
 ;directiva EQU lo que hace es que asigna al valor simbolico de una expresion. 
 ;Cuando encuentre el codigo dicho nombre simbolico. lo sustituira por el valor de la expresion
 ;en este caso una contante numerica que nos indica el valor de los limites de la pantalla 
@@ -38,9 +38,9 @@ extrn spc:near
 
     buffer    DB  8000 DUP(20h),20h ; Buffer para contenido maximo de 8000 caracteres
     LIST      LABEL  BYTE                       ;
-    MAX_L     DB     21
-    LEN       DB     ?
-    nombre_archivo   DB     23 DUP(' ')  ; Buffer for crear_archivo2 name
+        MAX_L     DB     21
+        LEN       DB     ?
+        nombre_archivo   DB     23 DUP(' ')  ; Buffer for crear_archivo2 name
     fid              DW     ?
     archivo_temo     DB     'temp.txt',0 ;el archivo temporal nos ayuda mientras le pone un nombre al archivo
     ;color db 71H    ;color del fondo
@@ -86,12 +86,12 @@ tipo_captura:
         mov    ah, 02H            ; int 21H,02H - escribe el caracter de salida
         jnz    cap_encendidas             ; salta si no es cero o error a mostrar que las capturas estan habilitadas
         mov    cx, 04
-        mov    dl, 20H            ; Set the character writen to STDOUT to spcae 
+        mov    dl, 20H            ; Establezca el carácter escrito en STDOUT en espacio
 cic1_tipo_captura:
         int    21H
-        loop   cic1_tipo_captura            ; loop to clean Caps Lock information
+        loop   cic1_tipo_captura            ; loop para limpiar las caps lock.
         jmp    num
-cap_encendidas: print"Caps"
+cap_encendidas: 
 
 
 num:    mov    posy, 70            ; posyumn locacion del cursor
@@ -109,7 +109,7 @@ num:    mov    posy, 70            ; posyumn locacion del cursor
 num_apagado:int    21H
         loop   num_apagado             ; loop to clean Num Lock information
         jmp    sal_tipo_captura
-num_encendido:  print "Num"
+num_encendido:  
 
 sal_tipo_captura:
         pop    dx                 ; restauramos la posicion x y y
@@ -600,7 +600,7 @@ repeatSpace:
         ret
 
 insertar_activo:  
-        call    insertar_archivo            ;Insert
+        ;call    insertar_archivo            ;Insert
         ret
 
 Ent:    ;call    insertar_archivo
@@ -616,7 +616,7 @@ pulso_f1:
         mov    ax, 0600H          ;posicionar scroll y limpiar
         call   limpiar_pantalla   
         mov    ah, 3CH            ;funcion para crear el arhivo
-        mov al,00
+        mov     al,00             ;CREACION DEL ARCHIVO EN TIPO LECTURA
         call   crear_archivo2               ; crear nuevo archivo
         call    restablecer_posicion_inicial
         call    para_abajo
@@ -626,7 +626,7 @@ pulso_f2:
         mov    ax, 0600H          ;posicionamos el scroll y lo limiamos
         call   limpiar_pantalla   ; Scroll
         mov    ah,3dh            ;abrimos el archivo solo en modo apartura
-        mov     al,02
+        mov     al,02            ;lo abrimos en lectura/ escritura
         call   crear_archivo2     ;abrimos o creamos un archivo
         call   leer               ;leemos el contenido de este
         call   restablecer_posicion_inicial
@@ -649,55 +649,6 @@ pulso_esc:
         ret
 
 
-;datos en modo insercion del archivo 
-insertar_archivo:
-        call   cursor
-        mov    cx, 8000
-        lea    si, buffer+7998  ;seteamos los contadores en las ultimas posiciones del bufer
-        lea    DI, buffer+7999
-insertar_car:mov    dh, [si]
-        mov    [di], dh
-        dec    si
-        dec    DI
-        dec    cx
-        cmp    cx, locacion             ; completamos el movimiento
-        ja     insertar_car                       ;Salta si está arriba o si es igual o salta si no está abajo.
-        call   escribir_caracter        ; Wescribirmos el caracter
-        call   salvar                   ;salvamos lo que tiene escrito en el buffer
-        mov    BH, posy
-        mov    BL, posx
-        push   BX                       ;respladamos en pila las posiciones
-        call   cursor                   ;llamamos el cursor
-        mov    BX, locacion             ;llamamos la locacion del cursor
-        mov    dh, Ltop                 ;mocemos lo que tenemos en dh que en este caso es el lo que tiene el buffer en si que es el contador
-        push   dx
-        mov    Ltop, 00                 ;seteamos el tope izquiero como 00 para volver iniciar en la siguiente linea
-        call   cursor
-        mov    cx, locacion             ;obtenemos la locacion
-        lea    DI, buffer               ;movemos lo que tiene el bufer a di 
-	;mostrar y mover el caracter
-insertar_mos:     mov    al, [DI+BX]    
-        inc    BX                       ;incrementamos bx ambas posiciones tanto x como y
-        inc    cx                       ;incrementamos cx la locacion
-        call   escribir_caracter        
-        cmp    cx, 1598        
-        jbe    insertar_mos             ;JBE Si está por debajo o igual CF=1 ó ZF=1
-        ;el caracter esta en la ultima posicion de x
-        ;todo esto es para escribir caracter y atributo en la posicoin del cursor
-        ;donde al, caracter, bh, numero de pagina, bl=color, cx,numero de veces para escribir en el caracter
-        ;dudas informacion: https://es-academic.com/dic.nsf/eswiki/591427
-        mov    al, buffer+1599  ;pongo el 1599       
-        mov    ah, 09H                  ;
-        mov    BH, 0             ;bloque del mapa a leer en este caso no hay
-        mov    BL, 07H           
-        mov    cx, 01           
-        int    10H
-        pop    dx
-        mov    Ltop, dh        
-        pop    BX                 ; recobramos la posiocion x
-        mov    posy, BH
-        mov    posx, BL
-        ret
 
 ;salvar los datos bufer bufer
 salvar:
